@@ -5,7 +5,7 @@
 🔥 ELECTRON OSINT BOT — PREMIUM NUMBER INFO
 👑 Owner: @GpsirEra
 📢 Channel: https://t.me/+0w8ATlAukVA1MWU1
-⚡ Vercel Serverless | Premium Emojis | FIXED WEBHOOK
+⚡ Vercel Serverless | FIXED WEBHOOK
 """
 
 import os
@@ -55,16 +55,12 @@ def premium_emoji(key):
         return f'<tg-emoji emoji-id="{eid}">✨</tg-emoji>'
     return "✨"
 
-def emoji_text(text, key="computer"):
-    return f"{premium_emoji(key)} {text}"
-
 # ============ FASTAPI APP ============
 app = FastAPI()
 bot_app = None
 
 # ============ API FUNCTION ============
 def lookup_number(phone: str) -> dict:
-    """Fetch number info from Electron API"""
     url = f"{API_URL}?mobile={phone}&key={API_KEY}"
     try:
         response = requests.get(url, timeout=15)
@@ -76,7 +72,6 @@ def lookup_number(phone: str) -> dict:
 
 # ============ FORMAT RESULT ============
 def format_result(data: dict) -> str:
-    """Format API response into beautiful Telegram message"""
     if data.get("status") != "success":
         return f"""
 {premium_emoji('warning')} *ERROR*
@@ -194,21 +189,18 @@ async def lookup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    # Send processing message
     msg = await update.message.reply_text(
         f"{premium_emoji('thinking')} *Fetching data for:* `{phone}`\n"
         f"Please wait... {premium_emoji('cloud')}",
         parse_mode=ParseMode.HTML
     )
     
-    # Fetch data
     result = lookup_number(phone)
     formatted = format_result(result)
     
     await msg.edit_text(formatted, parse_mode=ParseMode.HTML)
 
 async def example_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Example data
     example_data = {
         "status": "success",
         "target": "9035622887",
@@ -228,7 +220,6 @@ async def example_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     formatted = format_result(example_data)
     
-    # Add example note
     note = f"""
 {premium_emoji('eyes')} *📌 EXAMPLE RESULT*
 
@@ -350,12 +341,9 @@ async def premium_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle direct number input"""
     text = update.message.text.strip()
     
-    # Check if it's a phone number
     if text.isdigit() and len(text) >= 10:
-        # Process as lookup
         msg = await update.message.reply_text(
             f"{premium_emoji('thinking')} *Fetching data for:* `{text}`\n"
             f"Please wait... {premium_emoji('cloud')}",
@@ -374,7 +362,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.HTML
         )
 
-# ============ CALLBACK HANDLERS ============
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -429,6 +416,8 @@ Data: Public databases
 @app.on_event("startup")
 async def startup():
     global bot_app
+    
+    # Initialize bot application
     bot_app = Application.builder().token(TOKEN).build()
     
     # Add handlers
@@ -441,15 +430,18 @@ async def startup():
     bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     bot_app.add_handler(CallbackQueryHandler(button_callback))
     
-    webhook_url = os.environ.get("WEBHOOK_URL", "")
-    if webhook_url:
-        await bot_app.bot.set_webhook(webhook_url)
-        print(f"✅ Webhook set to: {webhook_url}")
+    # Set webhook
+    webhook_url = os.environ.get("WEBHOOK_URL", "https://gpsor-era-osint-era-snowy.vercel.app/webhook")
+    await bot_app.bot.set_webhook(webhook_url)
+    print(f"✅ Bot initialized. Webhook: {webhook_url}")
 
 @app.post("/webhook")
 async def webhook(request: Request):
-    if not bot_app:
+    global bot_app
+    
+    if bot_app is None:
         return {"status": "error", "message": "Bot not initialized"}
+    
     try:
         data = await request.json()
         update = Update.de_json(data, bot_app.bot)
