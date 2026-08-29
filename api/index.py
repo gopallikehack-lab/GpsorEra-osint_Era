@@ -31,7 +31,7 @@ API_KEY = os.environ.get("API_KEY", "@GpsirEra")
 OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))
 CHANNEL_LINK = os.environ.get("CHANNEL_LINK", "https://t.me/+0w8ATlAukVA1MWU1")
 OWNER_USERNAME = "@GpsirEra"
-BOT_NAME = "Electron OSINT Bot"
+BOT_NAME = "TEST OSINT BOT"
 
 # ============ PREMIUM EMOJI IDs ============
 EMOJIS = {
