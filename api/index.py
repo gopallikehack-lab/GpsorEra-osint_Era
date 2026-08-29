@@ -5,7 +5,7 @@
 🔥 ELECTRON OSINT BOT — PREMIUM NUMBER INFO
 👑 Owner: @GpsirEra
 📢 Channel: https://t.me/+0w8ATlAukVA1MWU1
-⚡ Vercel Serverless | Premium Emojis
+⚡ Vercel Serverless | Premium Emojis | FIXED WEBHOOK
 """
 
 import os
@@ -31,7 +31,7 @@ API_KEY = os.environ.get("API_KEY", "@GpsirEra")
 OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))
 CHANNEL_LINK = os.environ.get("CHANNEL_LINK", "https://t.me/+0w8ATlAukVA1MWU1")
 OWNER_USERNAME = "@GpsirEra"
-BOT_NAME = "TEST OSINT BOT"
+BOT_NAME = "Electron OSINT Bot"
 
 # ============ PREMIUM EMOJI IDs ============
 EMOJIS = {
@@ -426,8 +426,6 @@ Data: Public databases
         await query.message.reply_text(about, parse_mode=ParseMode.HTML)
 
 # ============ VERCEL WEBHOOK ============
-app = FastAPI()
-
 @app.on_event("startup")
 async def startup():
     global bot_app
@@ -458,7 +456,16 @@ async def webhook(request: Request):
         await bot_app.process_update(update)
         return {"status": "ok"}
     except Exception as e:
+        print(f"Webhook error: {e}")
         return {"status": "error", "message": str(e)}
+
+@app.get("/webhook")
+async def webhook_get():
+    return {
+        "status": "ok",
+        "message": "Webhook endpoint is active. Use POST for Telegram updates.",
+        "docs": "https://core.telegram.org/bots/api#setwebhook"
+    }
 
 @app.get("/")
 async def root():
