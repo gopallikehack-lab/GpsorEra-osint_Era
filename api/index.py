@@ -1,100 +1,35 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-🔥 ELECTRON OSINT BOT — PREMIUM NUMBER INFO
-👑 Owner: @GpsirEra
-📢 Channel: https://t.me/+0w8ATlAukVA1MWU1
-⚡ Vercel Serverless | FIXED WEBHOOK
-"""
-
 import os
 import json
-import requests
-from datetime import datetime
-from fastapi import FastAPI, Request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-    filters
-)
-from telegram.constants import ParseMode
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# ============ CONFIG ============
-TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-API_URL = os.environ.get("API_URL", "https://electron-cursed.vercel.app/lookup")
-API_KEY = os.environ.get("API_KEY", "@GpsirEra")
-OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))
-CHANNEL_LINK = os.environ.get("CHANNEL_LINK", "https://t.me/+0w8ATlAukVA1MWU1")
-OWNER_USERNAME = "@GpsirEra"
-BOT_NAME = "Electron OSINT Bot"
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from bot import start, lookup_command, handle_message, help_command, button_callback
 
-# ============ PREMIUM EMOJI IDs ============
-EMOJIS = {
-    "computer": "5260382369688333746",
-    "thinking": "5843618080713874142",
-    "skull": "5422636707893762950",
-    "laptop": "5350478083340122287",
-    "woman_tech": "5301083932211550593",
-    "cloud": "5339052439540606093",
-    "ninja": "6292081815389735688",
-    "warning": "5199950783969255534",
-    "cool": "5249380218254151868",
-    "crossed_swords": "5276294450425902729",
-    "ninja2": "5240415835528383591",
-    "eyes": "6140757035081271294"
-}
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-def premium_emoji(key):
-    eid = EMOJIS.get(key, "")
-    if eid:
-        return f'<tg-emoji emoji-id="{eid}">✨</tg-emoji>'
-    return "✨"
+def webhook(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            update = Update.de_json(data, None)
+            
+            app = Application.builder().token(BOT_TOKEN).build()
+            app.add_handler(CommandHandler("start", start))
+            app.add_handler(CommandHandler("lookup", lookup_command))
+            app.add_handler(CommandHandler("help", help_command))
+            app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+            app.add_handler(CallbackQueryHandler(button_callback))
+            
+            app.process_update(update)
+            return {"status": "ok"}
+        except Exception as e:
+            return {"error": str(e)}, 500
+    return {"message": "Webhook ready"}, 200
 
-# ============ FASTAPI APP ============
-app = FastAPI()
-bot_app = None
-
-# ============ API FUNCTION ============
-def lookup_number(phone: str) -> dict:
-    url = f"{API_URL}?mobile={phone}&key={API_KEY}"
-    try:
-        response = requests.get(url, timeout=15)
-        if response.status_code == 200:
-            return response.json()
-        return {"status": "error", "message": f"API Error: {response.status_code}"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-# ============ FORMAT RESULT ============
-def format_result(data: dict) -> str:
-    if data.get("status") != "success":
-        return f"""
-{premium_emoji('warning')} *ERROR*
-
-❌ {data.get('message', 'Unknown error')}
-
-Please check the number and try again.
-        """
-    
-    target = data.get("target", "Unknown")
-    info = data.get("data", [])
-    
-    if not info:
-        return f"""
-{premium_emoji('thinking')} *NO DATA FOUND*
-
-📱 Number: `{target}`
-
-No information found for this number.
-        """
-    
-    result = info[0]
-    
+# Vercel entry point
+handler = webhook    
     lines = []
     lines.append(f"{premium_emoji('eyes')} *🔍 OSINT RESULT* {premium_emoji('crossed_swords')}")
     lines.append("")
